@@ -8,7 +8,14 @@ const STORAGE_KEYS = {
   activeView: 'recruitment.activeView'
 };
 
+const EXTENDED_STATUS_FLOW = ['待筛选', '待补材料', '初筛通过', '已约面试', '面试中', '待评估', '已通过', '未通过', 'Offer进行中'];
 const STATUS_FLOW = ['待筛选', '已约面试', '已发录用'];
+
+const INTERVIEW_SCENARIOS = {
+  smooth: { label: '高匹配顺利面', summary: '候选人表达清晰、项目深度强，适合快速推进。', score: 92, outcome: 'pass' },
+  challenge: { label: '追问压力面', summary: '追问后暴露部分风险，需要补充材料和二次评估。', score: 68, outcome: 'review' },
+  risk: { label: '风险暴露场景', summary: '关键问题回答偏弱，建议谨慎推进。', score: 41, outcome: 'fail' }
+};
 
 const defaultJobs = [
   {
@@ -203,6 +210,12 @@ const els = {
   closeDrawerBtn: document.getElementById('close-drawer-btn'),
   refreshProfileBtn: document.getElementById('refresh-profile-btn'),
   requestReviewBtn: document.getElementById('request-review-btn'),
+  requestRescheduleBtn: document.getElementById('request-reschedule-btn'),
+  withdrawApplicationBtn: document.getElementById('withdraw-application-btn'),
+  interviewSimulator: document.getElementById('interview-simulator'),
+  resultCenter: document.getElementById('result-center'),
+  processStageBoard: document.getElementById('process-stage-board'),
+  decisionWorkbench: document.getElementById('decision-workbench'),
   topbarNav: document.getElementById('topbar-nav'),
   container: document.querySelector('.container'),
   viewPanels: document.querySelectorAll('[data-view-panel]'),
@@ -250,7 +263,12 @@ function normalizeData() {
       lastAction: candidate.lastAction || '等待新的流程动作',
       interviewConfirmed: Boolean(candidate.interviewConfirmed),
       priorityFlag: Boolean(candidate.priorityFlag),
-      profileBoost: Number(candidate.profileBoost || 0)
+      profileBoost: Number(candidate.profileBoost || 0),
+      progressStage: candidate.progressStage || (candidate.status === '已发录用' ? 'Offer进行中' : candidate.status === '已约面试' ? '已约面试' : '待筛选'),
+      resultStatus: candidate.resultStatus || (candidate.status === '已发录用' ? '已通过' : '待评估'),
+      resultSummary: candidate.resultSummary || '系统将根据资料、面试反馈和 HR 动作生成结果结论。',
+      selectedScenario: candidate.selectedScenario || 'smooth',
+      latestInterviewScore: Number(candidate.latestInterviewScore || 0)
     };
   });
 
@@ -281,12 +299,37 @@ function normalizeData() {
 
 function inferResumeAssessment(candidate) {
   const filledAnswers = Object.values(candidate.customAnswers || {}).filter(Boolean).length;
-  if (candidate.status === '已发录用') return '综合评估优秀，建议进入入职流程';
-  if (candidate.status === '已约面试') return candidate.interviewConfirmed
+  if (candidate.progressStage === '未通过') return '当前结论为未通过，可保留在人才池后续观察';
+  if (candidate.progressStage === 'Offer进行中' || candidate.status === '已发录用') return '综合评估优秀，建议进入入职流程';
+  if (candidate.progressStage === '待补材料') return '资料需要进一步补充，建议候选人完善案例与证明';
+  if (['已约面试', '面试中', '待评估'].includes(candidate.progressStage) || candidate.status === '已约面试') return candidate.interviewConfirmed
     ? '已确认参加面试，建议输出深度提问提纲'
     : '核心能力匹配度较高，等待候选人确认面试';
   if (filledAnswers >= 2) return '信息完整度高，建议优先安排初筛';
   return '基础信息已收集，建议补充岗位相关材料';
+}
+
+function resultBadgeClass(resultStatus = '待评估') {
+  if (['已通过', 'Offer进行中'].includes(resultStatus)) return 'result-badge result-badge--pass';
+  if (['未通过', '候选人撤回'].includes(resultStatus)) return 'result-badge result-badge--fail';
+  return 'result-badge result-badge--pending';
+}
+
+function syncLegacyStatus(candidate) {
+  if (['已通过', 'Offer进行中'].includes(candidate.progressStage)) {
+    candidate.status = '已发录用';
+    if (candidate.progressStage === '已通过') candidate.progressStage = 'Offer进行中';
+    return;
+  }
+  if (['已约面试', '面试中', '待评估', '初筛通过'].includes(candidate.progressStage)) {
+    candidate.status = '已约面试';
+    return;
+  }
+  candidate.status = '待筛选';
+}
+
+function currentCandidateInterview(candidateId) {
+  return interviews.find((item) => item.candidateId === candidateId);
 }
 
 function currentProfileCandidate() {
@@ -1028,6 +1071,87 @@ function renderMessages() {
   `).join('');
 }
 
+function renderProcessStageBoard() {
+  if (!els.processStageBoard) return;
+  const current = currentProfileCandidate();
+  const chips = EXTENDED_STATUS_FLOW.map((stage) => `
+    <button type="button" class="stage-chip ${current?.progressStage === stage ? 'is-active' : ''}" data-stage-action="advance" data-stage="${stage}">${stage}</button>
+  `).join('');
+  const grid = EXTENDED_STATUS_FLOW.map((stage) => `
+    <div class="kv-item"><span>${stage}</span><strong>${candidates.filter((item) => item.progressStage === stage).length} 人</strong></div>
+  `).join('');
+  els.processStageBoard.innerHTML = `
+    <div class="flow-note">当前候选人：<strong>${current ? `${current.name} · ${current.jobTitle}` : '暂无候选人'}</strong></div>
+    <div class="stage-chip-row">${chips}</div>
+    <div class="process-stage-board__grid">${grid}</div>
+  `;
+}
+
+function renderInterviewSimulator() {
+  if (!els.interviewSimulator) return;
+  const current = currentProfileCandidate();
+  if (!current) {
+    els.interviewSimulator.innerHTML = '<div class="empty">暂无候选人可用于面试模拟。</div>';
+    return;
+  }
+  const interview = currentCandidateInterview(current.id);
+  const chips = Object.entries(INTERVIEW_SCENARIOS).map(([key, item]) => `
+    <button type="button" class="scenario-chip ${current.selectedScenario === key ? 'is-active' : ''}" data-simulator-action="pick-scenario" data-id="${current.id}" data-scenario="${key}">${item.label}</button>
+  `).join('');
+  els.interviewSimulator.innerHTML = `
+    <p class="flow-note">面向 <strong>${current.name}</strong> 的面试流程仿真，可模拟不同表现并自动生成结果。${interview ? ` 当前面试：${formatInterviewTime(interview.time)} · ${interview.mode}` : ' 当前尚未排期，系统将按默认场景推演。'}</p>
+    <div class="scenario-chip-row">${chips}</div>
+    <div class="simulator-kpi">
+      <div class="kv-item"><span>当前流程阶段</span><strong>${current.progressStage}</strong></div>
+      <div class="kv-item"><span>已选模拟场景</span><strong>${INTERVIEW_SCENARIOS[current.selectedScenario]?.label || '高匹配顺利面'}</strong></div>
+      <div class="kv-item"><span>最近模拟分数</span><strong>${current.latestInterviewScore || '--'}</strong></div>
+      <div class="kv-item"><span>结果状态</span><strong>${current.resultStatus || '待评估'}</strong></div>
+    </div>
+    <button class="btn btn--primary" type="button" data-simulator-action="run" data-id="${current.id}">启动模拟面试</button>
+    <button class="btn btn--ghost" type="button" data-simulator-action="complete" data-id="${current.id}">完成本轮面试并生成结论</button>
+  `;
+}
+
+function renderResultCenter() {
+  if (!els.resultCenter) return;
+  const current = currentProfileCandidate();
+  if (!current) {
+    els.resultCenter.innerHTML = '<div class="empty">暂无结果数据。</div>';
+    return;
+  }
+  const interview = currentCandidateInterview(current.id);
+  els.resultCenter.innerHTML = `
+    <div class="flow-note">流程结果中心会根据招聘流程模拟引擎与 HR 决策工作台，输出统一结论。</div>
+    <div class="result-center__grid">
+      <div class="kv-item"><span>候选人</span><strong>${current.name}</strong></div>
+      <div class="kv-item"><span>当前判定</span><strong class="${resultBadgeClass(current.resultStatus)}">${current.resultStatus || '待评估'}</strong></div>
+      <div class="kv-item"><span>流程阶段</span><strong>${current.progressStage}</strong></div>
+      <div class="kv-item"><span>面试安排</span><strong>${interview ? `${formatInterviewTime(interview.time)} · ${interview.mode}` : '待安排'}</strong></div>
+      <div class="kv-item"><span>最近面试分数</span><strong>${current.latestInterviewScore || '--'}</strong></div>
+      <div class="kv-item"><span>结论说明</span><strong>${current.resultSummary || '等待系统生成'}</strong></div>
+    </div>
+  `;
+}
+
+function renderDecisionWorkbench() {
+  if (!els.decisionWorkbench) return;
+  const current = currentProfileCandidate();
+  if (!current) {
+    els.decisionWorkbench.innerHTML = '<div class="empty">暂无候选人可处理。</div>';
+    return;
+  }
+  els.decisionWorkbench.innerHTML = `
+    <p class="flow-note">HR 可直接推进流程、要求补充材料或给出通过/不通过结果展示。</p>
+    <div class="decision-action-row">
+      <button class="btn btn--ghost" type="button" data-decision-action="advance" data-stage="待补材料" data-id="${current.id}">标记待补材料</button>
+      <button class="btn btn--ghost" type="button" data-decision-action="advance" data-stage="待评估" data-id="${current.id}">推进到待评估</button>
+      <button class="btn btn--ghost" type="button" data-decision-action="outcome" data-outcome="pass" data-id="${current.id}">判定已通过</button>
+      <button class="btn btn--ghost" type="button" data-decision-action="outcome" data-outcome="fail" data-id="${current.id}">判定未通过</button>
+      <button class="btn btn--ghost" type="button" data-decision-action="offer" data-id="${current.id}">进入 Offer进行中</button>
+    </div>
+  `;
+}
+
 function renderApplicantPortal() {
   const candidate = currentProfileCandidate();
   if (!candidate) {
@@ -1047,11 +1171,14 @@ function renderApplicantPortal() {
       <p>系统正在跟踪该候选人在 ${candidate.jobTitle} 上的投递进度，并同步给 HR 与候选人双方。</p>
       <div class="kv-grid">
         <div class="kv-item"><span>当前状态</span><strong>${candidate.status}</strong></div>
+        <div class="kv-item"><span>流程阶段</span><strong>${candidate.progressStage}</strong></div>
+        <div class="kv-item"><span>结果判定</span><strong>${candidate.resultStatus || '待评估'}</strong></div>
         <div class="kv-item"><span>简历评估</span><strong>${inferResumeAssessment(candidate)}</strong></div>
         <div class="kv-item"><span>联系方式</span><strong>${candidate.contact}</strong></div>
         <div class="kv-item"><span>最近动作</span><strong>${candidate.lastAction}</strong></div>
         <div class="kv-item"><span>面试安排</span><strong>${interview ? `${formatInterviewTime(interview.time)} · ${interview.mode}` : '暂无安排'}</strong></div>
         <div class="kv-item"><span>面试反馈</span><strong>${interview ? interview.feedback : '待更新'}</strong></div>
+        <div class="kv-item"><span>结果说明</span><strong>${candidate.resultSummary || '等待系统判定'}</strong></div>
         ${answerHtml}
       </div>
     </article>
@@ -1206,6 +1333,10 @@ function syncViews() {
   renderApplicantPortal();
   renderWorkspaceView();
   renderActivityFeed();
+  renderInterviewSimulator();
+  renderResultCenter();
+  renderProcessStageBoard();
+  renderDecisionWorkbench();
   renderOpsHealth();
   renderOpsAlerts();
   renderJourneyMap();
@@ -1263,6 +1394,11 @@ function submitCandidate(event) {
     jobTitle: selectedJob.title,
     resume: String(formData.get('resume')).trim(),
     status: '待筛选',
+    progressStage: '待筛选',
+    resultStatus: '待评估',
+    resultSummary: '申请已提交，系统等待 HR 初筛和后续推进。',
+    selectedScenario: 'smooth',
+    latestInterviewScore: 0,
     submittedAt: formatDateTime(),
     customAnswers,
     lastAction: '已提交申请，等待 HR 初筛',
@@ -1317,6 +1453,9 @@ function submitInterview(event) {
     : [interview, ...interviews];
 
   candidate.status = '已约面试';
+  candidate.progressStage = '已约面试';
+  candidate.resultStatus = '待评估';
+  candidate.resultSummary = '已安排面试，等待候选人确认并完成本轮沟通。';
   candidate.lastAction = `已安排${formatInterviewTime(interview.time)} ${interview.mode}面试，等待候选人确认`;
   candidate.interviewConfirmed = false;
   persistAll();
@@ -1348,15 +1487,22 @@ function submitFeedback(event) {
   const feedback = String(formData.get('feedback')).trim();
   interview.feedback = `${verdict}：${feedback}`;
   if (verdict === '继续推进') {
-    candidate.status = '已发录用';
+    candidate.progressStage = 'Offer进行中';
+    candidate.resultStatus = '已通过';
+    candidate.resultSummary = `面试反馈为继续推进：${feedback}`;
     candidate.lastAction = '面试通过，进入 offer 沟通与入职准备';
   } else if (verdict === '补充沟通') {
-    candidate.status = '已约面试';
+    candidate.progressStage = '待评估';
+    candidate.resultStatus = '待评估';
+    candidate.resultSummary = `已进入补充沟通：${feedback}`;
     candidate.lastAction = '已完成面试，等待补充沟通与复核';
   } else {
-    candidate.status = '待筛选';
+    candidate.progressStage = '未通过';
+    candidate.resultStatus = '未通过';
+    candidate.resultSummary = `本轮面试暂缓：${feedback}`;
     candidate.lastAction = '面试后暂缓推进，保留人才池观察';
   }
+  syncLegacyStatus(candidate);
   persistAll();
   els.feedbackForm.reset();
   syncViews();
@@ -1376,9 +1522,21 @@ function updateCandidateStatus(id, status, source = 'hr') {
   const candidate = candidates.find((item) => item.id === id);
   if (!candidate) return;
   candidate.status = status;
-  if (status === '待筛选') candidate.lastAction = '已回到筛选阶段，等待 HR 继续处理';
-  if (status === '已约面试') candidate.lastAction = '已推进到面试阶段，等待确认面试安排';
-  if (status === '已发录用') candidate.lastAction = '已通过最终评估，进入 offer 沟通';
+  if (status === '待筛选') {
+    candidate.progressStage = '待筛选';
+    candidate.resultStatus = '待评估';
+    candidate.lastAction = '已回到筛选阶段，等待 HR 继续处理';
+  }
+  if (status === '已约面试') {
+    candidate.progressStage = '已约面试';
+    candidate.resultStatus = '待评估';
+    candidate.lastAction = '已推进到面试阶段，等待确认面试安排';
+  }
+  if (status === '已发录用') {
+    candidate.progressStage = 'Offer进行中';
+    candidate.resultStatus = '已通过';
+    candidate.lastAction = '已通过最终评估，进入 offer 沟通';
+  }
   persistAll();
   syncViews();
   pushNotification('状态已更新', `${candidate.name} 的流程状态已更新为“${status}”。`, source, {
@@ -1405,6 +1563,10 @@ function setProfileCandidate(candidateId) {
   renderServiceBoard();
   renderApplicantCoach();
   renderLiveStatus();
+  renderInterviewSimulator();
+  renderResultCenter();
+  renderProcessStageBoard();
+  renderDecisionWorkbench();
 }
 
 function setPersona(persona) {
@@ -1593,6 +1755,126 @@ function confirmInterviewAttendance() {
   });
 }
 
+
+function advanceCandidateStage(candidateId, stage) {
+  const candidate = candidates.find((item) => item.id === candidateId);
+  if (!candidate) return;
+  candidate.progressStage = stage;
+  if (stage === '待补材料') {
+    candidate.resultStatus = '待评估';
+    candidate.resultSummary = 'HR 要求候选人补充作品、经历说明或证明材料。';
+    candidate.lastAction = 'HR 已要求补充材料，等待候选人更新资料';
+  } else if (stage === '面试中') {
+    candidate.resultStatus = '待评估';
+    candidate.resultSummary = '候选人已进入面试模拟与正式沟通阶段。';
+    candidate.lastAction = '面试进行中，系统正在记录候选人表现';
+  } else if (stage === '待评估') {
+    candidate.resultStatus = '待评估';
+    candidate.resultSummary = '本轮沟通已完成，等待 HR 统一给出结论。';
+    candidate.lastAction = '已进入待评估阶段，等待结果判定';
+  } else if (stage === 'Offer进行中') {
+    candidate.resultStatus = '已通过';
+    candidate.resultSummary = '候选人已通过评估，正在进入 offer 沟通与入职准备。';
+    candidate.lastAction = 'Offer 沟通进行中，待确认入职时间';
+  } else {
+    candidate.lastAction = `流程已推进至 ${stage}`;
+  }
+  syncLegacyStatus(candidate);
+  persistAll();
+  syncViews();
+  pushNotification('流程阶段已推进', `${candidate.name} 当前阶段已更新为“${stage}”。`, 'hr', {
+    audience: ['hr', 'applicant'], candidateId: candidate.id, candidateName: candidate.name
+  });
+}
+
+function setCandidateOutcome(candidateId, outcome) {
+  const candidate = candidates.find((item) => item.id === candidateId);
+  if (!candidate) return;
+  if (outcome === 'pass') {
+    candidate.progressStage = 'Offer进行中';
+    candidate.resultStatus = '已通过';
+    candidate.resultSummary = '系统结合资料与面试表现，建议发起 offer。';
+    candidate.lastAction = '结果判定为已通过，进入 offer 推进';
+  } else {
+    candidate.progressStage = '未通过';
+    candidate.resultStatus = '未通过';
+    candidate.resultSummary = '系统判定当前匹配度不足，建议结束本轮流程。';
+    candidate.lastAction = '结果判定为未通过，本轮招聘流程结束';
+  }
+  syncLegacyStatus(candidate);
+  persistAll();
+  syncViews();
+  pushNotification('结果已判定', `${candidate.name} 的流程结果已更新为“${candidate.resultStatus}”。`, 'hr', {
+    audience: ['hr', 'applicant'], candidateId: candidate.id, candidateName: candidate.name
+  });
+}
+
+function simulateInterviewRound(candidateId, scenarioKey) {
+  const candidate = candidates.find((item) => item.id === candidateId);
+  if (!candidate) return;
+  const scenario = INTERVIEW_SCENARIOS[scenarioKey] || INTERVIEW_SCENARIOS.smooth;
+  candidate.selectedScenario = scenarioKey;
+  candidate.progressStage = '面试中';
+  candidate.resultStatus = '待评估';
+  candidate.resultSummary = scenario.summary;
+  candidate.latestInterviewScore = scenario.score;
+  candidate.lastAction = `已启动${scenario.label}，系统正在记录表现并生成结果建议`;
+  syncLegacyStatus(candidate);
+  persistAll();
+  syncViews();
+  pushNotification('面试模拟已启动', `${candidate.name} 已进入“${scenario.label}”场景模拟。`, 'hr', {
+    audience: ['hr', 'applicant'], candidateId: candidate.id, candidateName: candidate.name
+  });
+}
+
+function completeInterviewSimulation(candidateId) {
+  const candidate = candidates.find((item) => item.id === candidateId);
+  if (!candidate) return;
+  const scenario = INTERVIEW_SCENARIOS[candidate.selectedScenario] || INTERVIEW_SCENARIOS.smooth;
+  if (scenario.outcome === 'pass') return setCandidateOutcome(candidateId, 'pass');
+  if (scenario.outcome === 'fail') return setCandidateOutcome(candidateId, 'fail');
+  candidate.progressStage = '待评估';
+  candidate.resultStatus = '待评估';
+  candidate.resultSummary = `${scenario.summary} 已建议追加补充材料或二次面试。`;
+  candidate.lastAction = '本轮面试已完成，等待 HR 补充评估';
+  syncLegacyStatus(candidate);
+  persistAll();
+  syncViews();
+  pushNotification('面试模拟已完成', `${candidate.name} 已完成模拟面试，当前进入待评估阶段。`, 'hr', {
+    audience: ['hr', 'applicant'], candidateId: candidate.id, candidateName: candidate.name
+  });
+}
+
+function requestCandidateReschedule() {
+  const candidate = currentProfileCandidate();
+  if (!candidate) return;
+  const interview = currentCandidateInterview(candidate.id);
+  candidate.progressStage = '已约面试';
+  candidate.resultStatus = '待评估';
+  candidate.lastAction = '候选人申请改约面试，等待 HR 确认新的时间';
+  if (interview) interview.attendanceStatus = '待改约';
+  persistAll();
+  syncViews();
+  pushNotification('收到改约申请', `${candidate.name} 申请调整 ${candidate.jobTitle} 面试时间。`, 'applicant', {
+    audience: ['hr', 'applicant'], candidateId: candidate.id, candidateName: candidate.name
+  });
+}
+
+function withdrawCandidateApplication() {
+  const candidate = currentProfileCandidate();
+  if (!candidate) return;
+  candidate.progressStage = '未通过';
+  candidate.resultStatus = '候选人撤回';
+  candidate.resultSummary = '候选人已主动撤回本次申请，可保留档案供后续职位再次激活。';
+  candidate.lastAction = '候选人已撤回本次申请';
+  syncLegacyStatus(candidate);
+  persistAll();
+  syncViews();
+  pushNotification('候选人撤回申请', `${candidate.name} 已撤回 ${candidate.jobTitle} 的本次申请。`, 'applicant', {
+    audience: ['hr', 'applicant'], candidateId: candidate.id, candidateName: candidate.name
+  });
+}
+
 function bindEvents() {
   els.jobForm.addEventListener('submit', submitJob);
   els.candidateForm.addEventListener('submit', submitCandidate);
@@ -1614,6 +1896,8 @@ function bindEvents() {
   els.confirmInterviewBtn.addEventListener('click', confirmInterviewAttendance);
   els.refreshProfileBtn?.addEventListener('click', refreshCandidateProfile);
   els.requestReviewBtn?.addEventListener('click', requestPriorityReview);
+  els.requestRescheduleBtn?.addEventListener('click', requestCandidateReschedule);
+  els.withdrawApplicationBtn?.addEventListener('click', withdrawCandidateApplication);
   els.closeDrawerBtn?.addEventListener('click', closeCandidateDrawer);
   els.candidateDetailDrawer?.addEventListener('click', (event) => {
     if (event.target === els.candidateDetailDrawer) closeCandidateDrawer();
@@ -1696,6 +1980,41 @@ function bindEvents() {
     if (!card) return;
     setProfileCandidate(card.dataset.pipelineCandidate);
     scheduleInterviewFromPipeline(card.dataset.pipelineCandidate);
+  });
+
+  els.interviewSimulator?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-simulator-action]');
+    if (!button) return;
+    const candidateId = button.dataset.id || currentProfileCandidate()?.id;
+    const action = button.dataset.simulatorAction;
+    if (action === 'pick-scenario') {
+      const candidate = candidates.find((item) => item.id === candidateId);
+      if (!candidate) return;
+      candidate.selectedScenario = button.dataset.scenario || 'smooth';
+      persistAll();
+      syncViews();
+      return;
+    }
+    if (action === 'run') simulateInterviewRound(candidateId, currentProfileCandidate()?.selectedScenario || 'smooth');
+    if (action === 'complete') completeInterviewSimulation(candidateId);
+  });
+
+  els.processStageBoard?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-stage-action="advance"]');
+    if (!button) return;
+    const current = currentProfileCandidate();
+    if (!current) return;
+    advanceCandidateStage(current.id, button.dataset.stage);
+  });
+
+  els.decisionWorkbench?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-decision-action]');
+    if (!button) return;
+    const candidateId = button.dataset.id || currentProfileCandidate()?.id;
+    const action = button.dataset.decisionAction;
+    if (action === 'advance') advanceCandidateStage(candidateId, button.dataset.stage);
+    if (action === 'outcome') setCandidateOutcome(candidateId, button.dataset.outcome);
+    if (action === 'offer') advanceCandidateStage(candidateId, 'Offer进行中');
   });
 }
 

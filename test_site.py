@@ -231,3 +231,52 @@ def test_upgrade_command_center_markers():
     assert 'function renderApplicantCoach()' in js
     assert '.overview-command-grid' in css
     assert '.topbar__status' in css
+
+
+def test_interactive_recruitment_flow_markers():
+    html = INDEX.read_text(encoding='utf-8')
+    css = STYLE.read_text(encoding='utf-8')
+    js = SCRIPT.read_text(encoding='utf-8')
+
+    for text in [
+        '招聘流程模拟引擎',
+        '流程结果中心',
+        '面试模拟舱',
+        '候选人状态推进器',
+        'id="interview-simulator"',
+        'id="result-center"',
+        'id="process-stage-board"',
+        '待补材料',
+        '面试中',
+        '待评估',
+        '已通过',
+        '未通过',
+        'Offer进行中',
+    ]:
+        assert text in html, f'missing interactive flow marker: {text}'
+
+    for text in [
+        'INTERVIEW_SCENARIOS',
+        'EXTENDED_STATUS_FLOW',
+        'simulateInterviewRound',
+        'advanceCandidateStage',
+        'setCandidateOutcome',
+        'renderInterviewSimulator',
+        'renderResultCenter',
+        'renderProcessStageBoard',
+        'renderDecisionWorkbench',
+        'requestCandidateReschedule',
+        'withdrawCandidateApplication',
+        'completeInterviewSimulation',
+    ]:
+        assert text in js, f'missing interactive recruitment behavior marker: {text}'
+
+    for text in [
+        '.simulator-card',
+        '.result-center',
+        '.process-stage-board',
+        '.scenario-chip',
+        '.decision-workbench',
+        '.result-badge',
+    ]:
+        assert text in css, f'missing interactive recruitment style marker: {text}'

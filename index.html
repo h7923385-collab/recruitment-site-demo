@@ -364,7 +364,13 @@
             <select id="candidate-status-filter">
               <option value="all">全部状态</option>
               <option value="待筛选">待筛选</option>
+              <option value="待补材料">待补材料</option>
               <option value="已约面试">已约面试</option>
+              <option value="面试中">面试中</option>
+              <option value="待评估">待评估</option>
+              <option value="已通过">已通过</option>
+              <option value="未通过">未通过</option>
+              <option value="Offer进行中">Offer进行中</option>
               <option value="已发录用">已发录用</option>
             </select>
             <select id="candidate-job-filter">
@@ -451,6 +457,34 @@
           <h3>面试日程</h3>
           <div id="interview-list" class="interview-list"></div>
         </div>
+        <div class="interactive-flow-grid">
+          <section class="card elevated-card simulator-card" id="interview-simulator">
+            <div class="section-head-inline">
+              <h3>面试模拟舱</h3>
+              <span class="tag-chip">招聘流程模拟引擎</span>
+            </div>
+          </section>
+          <section class="card elevated-card result-center" id="result-center">
+            <div class="section-head-inline">
+              <h3>流程结果中心</h3>
+              <span class="tag-chip">结果判定</span>
+            </div>
+          </section>
+        </div>
+        <div class="interactive-flow-grid">
+          <section class="card elevated-card process-stage-board" id="process-stage-board">
+            <div class="section-head-inline">
+              <h3>候选人状态推进器</h3>
+              <span class="tag-chip">待补材料 / 面试中 / 待评估 / 已通过 / 未通过 / Offer进行中</span>
+            </div>
+          </section>
+          <section class="card elevated-card decision-workbench" id="decision-workbench">
+            <div class="section-head-inline">
+              <h3>HR 决策工作台</h3>
+              <span class="tag-chip">推进 / 判定 / 追踪</span>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section class="panel view-panel" id="interaction-section" data-view-panel="messages">
@@ -476,6 +510,8 @@
               <button class="btn btn--ghost" type="button" id="confirm-interview-btn">确认参加面试</button>
               <button class="btn btn--ghost" type="button" id="refresh-profile-btn">补充最新资料</button>
               <button class="btn btn--ghost" type="button" id="request-review-btn">请求优先查看</button>
+              <button class="btn btn--ghost" type="button" id="request-reschedule-btn">申请改约面试</button>
+              <button class="btn btn--ghost" type="button" id="withdraw-application-btn">撤回本次申请</button>
             </div>
           </div>
         </div>

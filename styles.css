@@ -1532,3 +1532,108 @@ body[data-persona='applicant'] .hr-only {
     flex-direction: column;
   }
 }
+
+
+.interactive-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.simulator-card,
+.result-center,
+.process-stage-board,
+.decision-workbench {
+  min-height: 220px;
+}
+
+.scenario-chip-row,
+.decision-action-row,
+.stage-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.scenario-chip,
+.stage-chip {
+  border: 1px solid rgba(83, 58, 253, 0.16);
+  background: rgba(83, 58, 253, 0.08);
+  color: var(--stripe-label);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.scenario-chip.is-active,
+.stage-chip.is-active {
+  background: linear-gradient(135deg, rgba(83, 58, 253, 0.16), rgba(249, 107, 238, 0.16));
+  border-color: rgba(83, 58, 253, 0.28);
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.94rem;
+}
+
+.result-badge--pending {
+  background: rgba(83, 58, 253, 0.12);
+  color: var(--stripe-purple);
+}
+
+.result-badge--pass {
+  background: rgba(21, 190, 83, 0.14);
+  color: #0f8b3a;
+}
+
+.result-badge--fail {
+  background: rgba(234, 34, 97, 0.14);
+  color: #bb174e;
+}
+
+.simulator-kpi,
+.result-center__grid,
+.process-stage-board__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.result-center__grid .kv-item,
+.process-stage-board__grid .kv-item,
+.simulator-kpi .kv-item {
+  background: rgba(248, 251, 255, 0.9);
+  border: 1px solid var(--stripe-border);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.flow-note {
+  margin-top: 14px;
+  color: var(--stripe-body);
+  line-height: 1.6;
+}
+
+.decision-workbench .btn,
+.simulator-card .btn {
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .interactive-flow-grid,
+  .result-center__grid,
+  .process-stage-board__grid,
+  .simulator-kpi {
+    grid-template-columns: 1fr;
+  }
+}
