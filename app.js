@@ -170,6 +170,10 @@ const els = {
   opsHealth: document.getElementById('ops-health'),
   opsAlerts: document.getElementById('ops-alerts'),
   quickActions: document.getElementById('quick-actions'),
+  liveStatus: document.getElementById('live-status'),
+  commandCenter: document.getElementById('command-center'),
+  serviceBoard: document.getElementById('service-board'),
+  applicantCoach: document.getElementById('applicant-coach'),
   journeyMap: document.getElementById('journey-map'),
   toastStack: document.getElementById('toast-stack'),
   interviewForm: document.getElementById('interview-form'),
@@ -777,6 +781,176 @@ function renderMyApplications() {
   }).join('');
 }
 
+function renderLiveStatus() {
+  if (!els.liveStatus) return;
+  const activeLabel = activePersona === 'hr' ? 'HR工作台在线' : '求职者中心在线';
+  const pendingCount = candidates.filter((item) => item.status === '待筛选').length;
+  const interviewCount = interviews.length;
+  const latest = notifications[0]?.title || '等待新的业务动作';
+  els.liveStatus.innerHTML = `
+    <strong>${activeLabel}</strong>
+    <span>${jobs.length} 个岗位开放中 · ${candidates.length} 位候选人在流程中</span>
+    <small>待筛选 ${pendingCount} · 面试安排 ${interviewCount} · 最新动态：${latest}</small>
+  `;
+}
+
+function renderCommandCenter() {
+  if (!els.commandCenter) return;
+  const current = currentProfileCandidate();
+  const pendingCount = candidates.filter((item) => item.status === '待筛选').length;
+  const interviewingCount = candidates.filter((item) => item.status === '已约面试').length;
+  const offerCount = candidates.filter((item) => item.status === '已发录用').length;
+  const savedCount = savedJobs.length;
+  const focusCandidate = candidates.find((item) => item.priorityFlag) || candidates[0];
+  const focusInterview = interviews.find((item) => item.attendanceStatus !== '已确认') || interviews[0];
+  const leadText = activePersona === 'hr'
+    ? '今天优先看初筛积压、面试确认与 Offer 推进。'
+    : `当前推荐你优先跟进 ${current ? current.jobTitle : '目标岗位'} 的流程反馈与资料完善。`;
+
+  els.commandCenter.innerHTML = `
+    <article class="command-center__hero">
+      <span class="command-center__eyebrow">Recruitment Operating Deck</span>
+      <h4>${activePersona === 'hr' ? '招聘运营总览已进入行动模式' : '候选人旅程已切换到个人视角'}</h4>
+      <p>${leadText}</p>
+      <div class="command-center__stats">
+        <div class="mini-stat">
+          <strong>${jobs.length}</strong>
+          <span>在招岗位</span>
+          <small>支持公开浏览与一键带入投递</small>
+        </div>
+        <div class="mini-stat">
+          <strong>${candidates.length}</strong>
+          <span>流程内候选人</span>
+          <small>HR 与求职者共用同一条业务主线</small>
+        </div>
+        <div class="mini-stat">
+          <strong>${savedCount}</strong>
+          <span>已收藏岗位</span>
+          <small>帮助求职者形成明确意向池</small>
+        </div>
+      </div>
+    </article>
+    <div class="command-center__strip">
+      <article class="command-tile">
+        <strong>流程热区</strong>
+        <span>${pendingCount} 位候选人仍待初筛，建议先查看候选人列表与优先动作。</span>
+      </article>
+      <article class="command-tile">
+        <strong>面试协同</strong>
+        <span>${focusInterview ? `${focusInterview.candidateName} 正等待确认 ${formatInterviewTime(focusInterview.time)} 的面试安排。` : '当前暂无待确认面试，流程协同状态良好。'}</span>
+      </article>
+      <article class="command-tile">
+        <strong>焦点对象</strong>
+        <span>${focusCandidate ? `${focusCandidate.name} · ${focusCandidate.jobTitle}，当前状态 ${focusCandidate.status}。` : '暂无焦点候选人。'}</span>
+      </article>
+    </div>
+    <div class="command-center__actions">
+      <button class="btn btn--primary" type="button" data-quick-action="switch-hr">切到 HR 工作台</button>
+      <button class="btn btn--ghost" type="button" data-quick-action="switch-applicant">切到求职者中心</button>
+      <button class="btn btn--ghost" type="button" data-quick-action="schedule-interview">快速安排面试</button>
+      <button class="btn btn--ghost" type="button" data-quick-action="focus-offer">查看 Offer 阶段</button>
+    </div>
+  `;
+}
+
+function renderServiceBoard() {
+  if (!els.serviceBoard) return;
+  const current = currentProfileCandidate();
+  const pendingCount = candidates.filter((item) => item.status === '待筛选').length;
+  const interviewingCount = candidates.filter((item) => item.status === '已约面试').length;
+  const offerCount = candidates.filter((item) => item.status === '已发录用').length;
+  const latest = notifications[0];
+  const items = activePersona === 'hr'
+    ? [
+      ['待办优先级', pendingCount ? `还有 ${pendingCount} 位候选人需要初筛` : '初筛队列已清空', '建议切到候选人列表批量推进'],
+      ['面试推进', interviewingCount ? `${interviewingCount} 位候选人处于面试阶段` : '暂无面试推进对象', '结合反馈表单与提醒动作联动'],
+      ['Offer关注', offerCount ? `${offerCount} 位候选人正在沟通录用` : 'Offer 池暂时为空', '同步入职资料与审批状态']
+    ]
+    : [
+      ['当前身份', current ? `${current.name} · ${current.jobTitle}` : '尚未建立候选人档案', '可立即填写在线投递表单'],
+      ['流程提醒', current ? `当前进度：${current.status}` : '等待第一次投递', '系统会同步下一步动作与消息'],
+      ['最新动态', latest ? latest.title : '暂无动态', latest ? latest.body : '完成投递后即可看到业务通知']
+    ];
+
+  els.serviceBoard.innerHTML = `
+    <div class="service-board__stats">
+      <div class="mini-stat">
+        <strong>${pendingCount}</strong>
+        <span>待筛选</span>
+        <small>从积压队列快速定位风险</small>
+      </div>
+      <div class="mini-stat">
+        <strong>${interviewingCount}</strong>
+        <span>面试中</span>
+        <small>重点跟进确认与反馈回填</small>
+      </div>
+      <div class="mini-stat">
+        <strong>${offerCount}</strong>
+        <span>Offer阶段</span>
+        <small>关注入职材料与沟通节奏</small>
+      </div>
+    </div>
+    <div class="service-board__list">
+      ${items.map(([title, body, meta]) => `
+        <article class="service-card">
+          <strong>${title}</strong>
+          <span>${body}</span>
+          <small class="service-card__meta">${meta}</small>
+        </article>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderApplicantCoach() {
+  if (!els.applicantCoach) return;
+  const candidate = currentProfileCandidate();
+  const interview = candidate ? interviews.find((item) => item.candidateId === candidate.id) : null;
+  if (!candidate) {
+    els.applicantCoach.innerHTML = `
+      <div class="applicant-coach__hero">
+        <div>
+          <h3>求职者引导台</h3>
+          <p>还没有候选人档案，先浏览岗位大厅并提交第一份申请。</p>
+        </div>
+        <span class="applicant-coach__badge">准备开始</span>
+      </div>
+      <div class="applicant-coach__stats">
+        <article class="coach-card"><strong>第一步</strong><span>浏览岗位大厅，收藏感兴趣职位。</span></article>
+        <article class="coach-card"><strong>第二步</strong><span>填写在线投递表单，建立候选人档案。</span></article>
+        <article class="coach-card"><strong>第三步</strong><span>回到我的申请，持续关注流程动态。</span></article>
+      </div>
+    `;
+    return;
+  }
+
+  const score = getCandidateScore(candidate);
+  els.applicantCoach.innerHTML = `
+    <div class="applicant-coach__hero">
+      <div>
+        <h3>候选人行动台</h3>
+        <p>${candidate.name} 当前正在推进 ${candidate.jobTitle}，系统已将身份、进度与消息流整合到同一视角。</p>
+      </div>
+      <span class="applicant-coach__badge">匹配度 ${score}</span>
+    </div>
+    <div class="applicant-coach__stats">
+      <article class="coach-card">
+        <strong>当前阶段</strong>
+        <span>${candidate.status}</span>
+        <small>${candidate.lastAction}</small>
+      </article>
+      <article class="coach-card">
+        <strong>下一步建议</strong>
+        <span>${interview && interview.attendanceStatus !== '已确认' ? '优先确认面试并查看消息中心提醒。' : '保持资料最新，提升 HR 查看与推进效率。'}</span>
+      </article>
+      <article class="coach-card">
+        <strong>协同状态</strong>
+        <span>${interview ? `${formatInterviewTime(interview.time)} · ${interview.mode}` : '等待 HR 创建后续安排'}</span>
+      </article>
+    </div>
+  `;
+}
+
 function renderTimeline() {
   const candidate = currentProfileCandidate();
   if (!candidate) {
@@ -1035,6 +1209,10 @@ function syncViews() {
   renderOpsHealth();
   renderOpsAlerts();
   renderJourneyMap();
+  renderLiveStatus();
+  renderCommandCenter();
+  renderServiceBoard();
+  renderApplicantCoach();
 }
 
 function submitJob(event) {
@@ -1223,6 +1401,10 @@ function setProfileCandidate(candidateId) {
   renderMessages();
   renderMyApplications();
   renderWorkspaceView();
+  renderCommandCenter();
+  renderServiceBoard();
+  renderApplicantCoach();
+  renderLiveStatus();
 }
 
 function setPersona(persona) {
@@ -1237,6 +1419,10 @@ function setPersona(persona) {
   });
   renderMessages();
   renderWorkspaceView();
+  renderCommandCenter();
+  renderServiceBoard();
+  renderApplicantCoach();
+  renderLiveStatus();
 }
 
 function setActiveView(view) {
@@ -1468,6 +1654,7 @@ function bindEvents() {
     if (view === 'hr') return activateWorkspaceView('hr', 'hr');
     if (view === 'applicant') return activateWorkspaceView('applicant', 'applicant');
     setActiveView(view);
+    renderLiveStatus();
   });
 
   els.jobGallery.addEventListener('click', (event) => {

@@ -30,6 +30,7 @@
           <button class="topbar__nav-btn" type="button" data-view-target="applicant">求职者中心</button>
           <button class="topbar__nav-btn" type="button" data-view-target="messages">消息中心</button>
         </nav>
+        <div id="live-status" class="topbar__status" aria-live="polite"></div>
         <button class="btn btn--primary btn--compact" type="button" data-view-target="overview">进入系统</button>
       </div>
     </header>
@@ -111,6 +112,22 @@
           <button class="persona-chip" type="button" data-persona="applicant">求职者中心</button>
         </div>
         <div class="workspace-view" id="workspace-view"></div>
+        <div class="overview-command-grid">
+          <section class="card elevated-card command-center-card">
+            <div class="section-head-inline">
+              <h3>经营驾驶舱</h3>
+              <span class="tag-chip">双身份协同</span>
+            </div>
+            <div id="command-center" class="command-center"></div>
+          </section>
+          <section class="card service-board-card">
+            <div class="section-head-inline">
+              <h3>流程服务台</h3>
+              <span class="tag-chip">推荐动作</span>
+            </div>
+            <div id="service-board" class="service-board"></div>
+          </section>
+        </div>
         <div class="persona-board">
           <article class="persona-panel" data-panel="hr">
             <h3>HR工作台</h3>
@@ -258,6 +275,7 @@
           <h2>岗位信息发布</h2>
           <span>HR 可维护岗位名称、职责描述、任职要求与自定义收集字段</span>
         </div>
+        <div id="applicant-coach" class="applicant-coach"></div>
         <div class="two-col">
           <form class="card form-card" id="job-form">
             <h3>发布新岗位</h3>

@@ -213,3 +213,21 @@ def test_filter_drawer_and_feedback_modules_present():
         '.applicant-action-strip',
     ]:
         assert text in css, f'missing enhanced style marker: {text}'
+
+
+
+def test_upgrade_command_center_markers():
+    html = (BASE / 'index.html').read_text(encoding='utf-8')
+    css = (BASE / 'styles.css').read_text(encoding='utf-8')
+    js = (BASE / 'app.js').read_text(encoding='utf-8')
+
+    assert '经营驾驶舱' in html or '运营驾驶舱' in html
+    assert 'id="command-center"' in html
+    assert 'id="service-board"' in html
+    assert 'id="applicant-coach"' in html
+    assert 'id="live-status"' in html
+    assert 'function renderCommandCenter()' in js
+    assert 'function renderServiceBoard()' in js
+    assert 'function renderApplicantCoach()' in js
+    assert '.overview-command-grid' in css
+    assert '.topbar__status' in css
