@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数智赋能招聘系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="glass-orb glass-orb--left"></div>
+    <div class="glass-orb glass-orb--right"></div>
+
+    <header class="topbar">
+      <div class="topbar__inner">
+        <button class="brand brand--button" type="button" data-view-target="overview">
+          <span class="brand__badge">RS</span>
+          <span>
+            <strong>数智赋能招聘系统</strong>
+            <small>企业级招聘管理平台</small>
+          </span>
+        </button>
+        <nav class="topbar__nav" id="topbar-nav">
+          <button class="topbar__nav-btn" type="button" data-view-target="overview">系统总览</button>
+          <button class="topbar__nav-btn" type="button" data-view-target="operations">运营驾驶舱</button>
+          <button class="topbar__nav-btn" type="button" data-view-target="hr">HR工作台</button>
+          <button class="topbar__nav-btn" type="button" data-view-target="applicant">求职者中心</button>
+          <button class="topbar__nav-btn" type="button" data-view-target="messages">消息中心</button>
+        </nav>
+        <button class="btn btn--primary btn--compact" type="button" data-view-target="overview">进入系统</button>
+      </div>
+    </header>
+
+    <header class="hero view-panel" id="hero-section" data-view-panel="overview">
+      <div class="hero__content">
+        <div class="eyebrow-row">
+          <span class="eyebrow">Intelligent Recruiting Suite</span>
+          <span class="eyebrow-tag">覆盖招聘需求、投递管理、沟通协同、面试执行与进度追踪</span>
+        </div>
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <h1>为 HR 与求职者提供同一套、不同视角的真实招聘体验。</h1>
+            <p class="hero__desc">
+              系统支持 HR 发布岗位、筛选候选人、安排面试，也支持求职者查看岗位、投递简历、追踪投递进度、接收消息提醒。所有关键动作都会联动更新看板、消息中心、人才流程看板与候选人沟通记录。
+            </p>
+            <div class="hero__actions">
+              <button type="button" class="btn btn--primary" data-view-target="hr">进入 HR 工作台</button>
+              <button type="button" class="btn btn--ghost" data-view-target="applicant">进入求职者中心</button>
+            </div>
+            <div class="hero-metrics">
+              <article class="hero-metric">
+                <strong>双角色视角</strong>
+                <span>HR工作台 / 求职者中心</span>
+              </article>
+              <article class="hero-metric">
+                <strong>实时协同</strong>
+                <span>消息、状态、流程时间线同步更新</span>
+              </article>
+              <article class="hero-metric">
+                <strong>真实互动</strong>
+                <span>岗位大厅、人才流程看板、我的申请一体联动</span>
+              </article>
+            </div>
+          </div>
+
+          <aside class="hero-panel">
+            <div class="hero-panel__header">
+              <span class="dot dot--pink"></span>
+              <span class="dot dot--purple"></span>
+              <span class="dot dot--blue"></span>
+              <small>Recruitment Operations Center</small>
+            </div>
+            <div class="hero-panel__body">
+              <div class="preview-card">
+                <p class="preview-card__label">流程概览</p>
+                <ul>
+                  <li>岗位信息发布与编制管理</li>
+                  <li>候选人投递与简历评估</li>
+                  <li>面试安排与流程推进</li>
+                  <li>消息中心与投递进度同步</li>
+                </ul>
+              </div>
+              <div class="preview-kpis">
+                <div>
+                  <span>角色覆盖</span>
+                  <strong>HR / 招聘经理 / 求职者</strong>
+                </div>
+                <div>
+                  <span>业务模式</span>
+                  <strong>校园招聘 / 社招 / 实习招聘</strong>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="panel view-panel" id="role-section" data-view-panel="overview">
+        <div class="section-title">
+          <h2>角色视角切换</h2>
+          <span>在同一系统中模拟 HR 与求职者的不同操作界面</span>
+        </div>
+        <div class="persona-switch" id="persona-switch">
+          <button class="persona-chip is-active" type="button" data-persona="hr">HR工作台</button>
+          <button class="persona-chip" type="button" data-persona="applicant">求职者中心</button>
+        </div>
+        <div class="workspace-view" id="workspace-view"></div>
+        <div class="persona-board">
+          <article class="persona-panel" data-panel="hr">
+            <h3>HR工作台</h3>
+            <p>适用于招聘专员、用人经理与面试协调人员，聚焦岗位管理、候选人筛选、简历评估和面试安排。</p>
+            <ul>
+              <li>管理岗位信息与岗位专属字段</li>
+              <li>查看候选人列表与状态变化</li>
+              <li>生成面试安排并推进流程</li>
+            </ul>
+          </article>
+          <article class="persona-panel" data-panel="applicant">
+            <h3>求职者中心</h3>
+            <p>适用于投递候选人，聚焦岗位浏览、资料补充、申请进度与沟通提醒。</p>
+            <ul>
+              <li>按岗位完成在线投递与资料补充</li>
+              <li>查看投递进度与关键节点</li>
+              <li>接收面试与状态更新消息</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel feature-strip view-panel" data-view-panel="overview">
+        <div class="section-title">
+          <h2>亮点功能</h2>
+          <span>围绕真实招聘流程打造更完整的业务互动</span>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <h3>多岗位发布</h3>
+            <p>支持不同岗位维护职责要求、部门信息与专属收集字段。</p>
+          </article>
+          <article class="feature-card">
+            <h3>简历评估</h3>
+            <p>系统根据候选人当前状态生成简历评估意见与推进建议。</p>
+          </article>
+          <article class="feature-card">
+            <h3>投递进度</h3>
+            <p>候选人可以看到从已投递、筛选中到面试安排的关键时间线。</p>
+          </article>
+          <article class="feature-card">
+            <h3>消息中心</h3>
+            <p>每次岗位发布、投递提交、面试安排、状态更新都会生成消息提醒。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel view-panel" id="dashboard-section" data-view-panel="overview">
+        <div class="section-title">
+          <h2>数据统计看板</h2>
+          <span>实时展示岗位、候选人、面试与录用进展</span>
+        </div>
+        <div class="stats-grid" id="stats-grid"></div>
+      </section>
+
+      <section class="panel ops-hub view-panel" id="ops-hub-section" data-view-panel="operations">
+        <div class="section-title">
+          <h2>招聘运营驾驶舱</h2>
+          <span>把角色切换、流程推进、优先级提醒和关键动作放到一个统一入口里</span>
+        </div>
+        <div class="ops-hub-grid">
+          <div class="card elevated-card ops-health-card">
+            <div class="section-head-inline">
+              <h3>运营健康度</h3>
+              <span class="tag-chip">实时体检</span>
+            </div>
+            <div id="ops-health" class="ops-health"></div>
+          </div>
+          <div class="card ops-alert-card">
+            <div class="section-head-inline">
+              <h3>今日优先处理</h3>
+              <span class="tag-chip">自动生成</span>
+            </div>
+            <div id="ops-alerts" class="ops-alerts"></div>
+          </div>
+          <div class="card elevated-card ops-action-card">
+            <div class="section-head-inline">
+              <h3>快捷操作台</h3>
+              <span class="tag-chip">一键跳转</span>
+            </div>
+            <div id="quick-actions" class="quick-actions">
+              <button class="btn btn--ghost" type="button" data-quick-action="switch-hr">切到 HR 视角</button>
+              <button class="btn btn--ghost" type="button" data-quick-action="switch-applicant">切到求职者视角</button>
+              <button class="btn btn--ghost" type="button" data-quick-action="new-apply">去投递表单</button>
+              <button class="btn btn--ghost" type="button" data-quick-action="schedule-interview">安排最近面试</button>
+              <button class="btn btn--ghost" type="button" data-quick-action="focus-offer">查看 offer 候选人</button>
+            </div>
+          </div>
+          <div class="card ops-journey-card">
+            <div class="section-head-inline">
+              <h3>候选人旅程地图</h3>
+              <span class="tag-chip">双身份联动</span>
+            </div>
+            <div id="journey-map" class="journey-map"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hr-only view-panel" id="overview-section" data-view-panel="hr">
+        <div class="section-title">
+          <h2>工作台总览</h2>
+          <span>面向 HR 的关键待办、招聘漏斗分析、人才流程看板与候选人沟通记录</span>
+        </div>
+        <div class="overview-grid">
+          <div class="card elevated-card">
+            <div class="section-head-inline">
+              <h3>关键招聘待办</h3>
+              <span class="tag-chip">今日优先级</span>
+            </div>
+            <div id="task-list" class="task-list"></div>
+          </div>
+          <div class="card">
+            <div class="section-head-inline">
+              <h3>招聘漏斗分析</h3>
+              <span class="tag-chip">实时转化</span>
+            </div>
+            <div id="funnel-grid" class="funnel-grid"></div>
+          </div>
+          <div class="card elevated-card">
+            <div class="section-head-inline">
+              <h3>人才流程看板</h3>
+              <span class="tag-chip">拖动式思维</span>
+            </div>
+            <div id="pipeline-board" class="pipeline-board"></div>
+          </div>
+          <div class="card">
+            <div class="section-head-inline">
+              <h3>候选人沟通记录</h3>
+              <span class="tag-chip">最近 8 条</span>
+            </div>
+            <div id="activity-feed" class="activity-feed"></div>
+          </div>
+        </div>
+        <div class="card recommendation-panel">
+          <div class="section-head-inline">
+            <h3>推荐候选人</h3>
+            <span class="tag-chip">系统建议优先推进</span>
+          </div>
+          <div id="recommended-candidates" class="recommendation-list"></div>
+        </div>
+      </section>
+
+      <section class="panel hr-only view-panel" id="job-section" data-view-panel="hr">
+        <div class="section-title">
+          <h2>岗位信息发布</h2>
+          <span>HR 可维护岗位名称、职责描述、任职要求与自定义收集字段</span>
+        </div>
+        <div class="two-col">
+          <form class="card form-card" id="job-form">
+            <h3>发布新岗位</h3>
+            <label>岗位名称
+              <input type="text" name="title" placeholder="如：高级招聘运营专员" required />
+            </label>
+            <label>所属部门
+              <input type="text" name="department" placeholder="如：人才发展中心" required />
+            </label>
+            <label>职责描述
+              <textarea name="description" rows="4" placeholder="负责招聘项目运营、数据分析、业务协同等" required></textarea>
+            </label>
+            <label>任职要求
+              <textarea name="requirements" rows="4" placeholder="有招聘、数据分析或项目协同经验优先" required></textarea>
+            </label>
+            <label>专属收集字段（用顿号/逗号分隔，可选）
+              <input type="text" name="customFields" placeholder="如：行业经验, 到岗时间, 作品集链接" />
+            </label>
+            <button class="btn btn--primary" type="submit">保存岗位</button>
+          </form>
+
+          <div class="card elevated-card">
+            <h3>已发布岗位</h3>
+            <div id="job-list" class="job-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel applicant-only view-panel" id="candidate-section" data-view-panel="applicant">
+        <div class="section-title">
+          <h2>求职者中心</h2>
+          <span>候选人投递表单 + 在线浏览岗位、提交资料并持续查看投递进度</span>
+        </div>
+        <div class="two-col">
+          <div class="applicant-stack">
+            <div class="card elevated-card">
+              <h3>岗位大厅</h3>
+              <p class="muted">浏览在招岗位、收藏感兴趣的职位，并可一键带入投递表单。</p>
+              <div id="job-gallery" class="job-gallery"></div>
+            </div>
+            <form class="card form-card" id="candidate-form">
+              <h3>在线投递简历</h3>
+              <label>姓名
+                <input type="text" name="name" placeholder="请输入姓名" required />
+              </label>
+              <label>联系方式
+                <input type="text" name="contact" placeholder="手机号 / 邮箱" required />
+              </label>
+              <label>应聘岗位
+                <select name="jobId" id="candidate-job-select" required></select>
+              </label>
+              <label>简历上传
+                <input type="text" name="resume" placeholder="填写简历文件名或网盘链接" required />
+              </label>
+              <div id="dynamic-fields" class="dynamic-fields"></div>
+              <button class="btn btn--primary" type="submit">提交候选人信息</button>
+            </form>
+          </div>
+
+          <div class="applicant-stack">
+            <div class="card dark-card timeline-card">
+              <h3>投递进度</h3>
+              <p class="muted-light">根据当前候选人状态实时生成进度时间线与下一步提醒。</p>
+              <label class="select-label">查看候选人档案
+                <select id="profile-candidate-select"></select>
+              </label>
+              <div id="applicant-summary" class="summary-card"></div>
+              <div id="timeline-list" class="timeline-list"></div>
+            </div>
+            <div class="card elevated-card">
+              <h3>我的申请</h3>
+              <div id="application-list" class="application-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hr-only view-panel" id="list-section" data-view-panel="hr">
+        <div class="section-title">
+          <h2>候选人列表</h2>
+          <span>智能筛选器 + 候选人详情抽屉，支持搜索、状态筛选与岗位维度联动</span>
+        </div>
+        <div class="card table-card">
+          <div class="table-toolbar recruitment-filters">
+            <input id="candidate-search" type="search" placeholder="搜索姓名、岗位、联系方式" />
+            <select id="candidate-status-filter">
+              <option value="all">全部状态</option>
+              <option value="待筛选">待筛选</option>
+              <option value="已约面试">已约面试</option>
+              <option value="已发录用">已发录用</option>
+            </select>
+            <select id="candidate-job-filter">
+              <option value="all">全部岗位</option>
+            </select>
+            <select id="candidate-sort">
+              <option value="latest">最新投递优先</option>
+              <option value="score">匹配度优先</option>
+              <option value="status">按流程阶段</option>
+            </select>
+            <button class="btn btn--ghost" type="button" id="reset-filters-btn">重置筛选</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>姓名</th>
+                  <th>联系方式</th>
+                  <th>应聘岗位</th>
+                  <th>简历上传</th>
+                  <th>简历评估</th>
+                  <th>面试状态</th>
+                  <th>提交时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="candidate-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hr-only view-panel" id="interview-section" data-view-panel="hr">
+        <div class="section-title">
+          <h2>面试安排</h2>
+          <span>HR 选择候选人、设定面试时间、录入面试反馈并推进 Offer 入职清单</span>
+        </div>
+        <div class="three-col-layout">
+          <form class="card form-card" id="interview-form">
+            <h3>创建面试安排</h3>
+            <label>候选人
+              <select name="candidateId" id="interview-candidate-select" required></select>
+            </label>
+            <label>面试时间
+              <input type="datetime-local" name="time" required />
+            </label>
+            <label>面试官
+              <input type="text" name="interviewer" placeholder="请输入面试官姓名" required />
+            </label>
+            <label>面试方式
+              <select name="mode" required>
+                <option value="现场">现场</option>
+                <option value="线上">线上</option>
+                <option value="电话">电话</option>
+              </select>
+            </label>
+            <button class="btn btn--primary" type="submit">保存面试安排</button>
+          </form>
+
+          <form class="card form-card" id="feedback-form">
+            <h3>面试反馈录入</h3>
+            <label>候选人
+              <select name="candidateId" id="feedback-candidate-select" required></select>
+            </label>
+            <label>反馈结论
+              <select name="verdict" required>
+                <option value="继续推进">继续推进</option>
+                <option value="补充沟通">补充沟通</option>
+                <option value="暂缓">暂缓</option>
+              </select>
+            </label>
+            <label>反馈摘要
+              <textarea name="feedback" rows="5" placeholder="记录能力亮点、风险点、下一步建议" required></textarea>
+            </label>
+            <button class="btn btn--primary" type="submit">提交反馈</button>
+          </form>
+
+          <div class="card elevated-card">
+            <h3>Offer入职清单</h3>
+            <div id="offer-checklist" class="offer-checklist"></div>
+          </div>
+        </div>
+        <div class="card elevated-card interview-schedule-card">
+          <h3>面试日程</h3>
+          <div id="interview-list" class="interview-list"></div>
+        </div>
+      </section>
+
+      <section class="panel view-panel" id="interaction-section" data-view-panel="messages">
+        <div class="section-title">
+          <h2>消息中心</h2>
+          <span>同步展示岗位、投递、状态变更、面试通知与候选人详情联动</span>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="section-head-inline">
+              <h3>系统消息流</h3>
+              <span id="message-context-tag" class="tag-chip">当前视角</span>
+            </div>
+            <div id="message-list" class="message-list"></div>
+          </div>
+          <div class="card elevated-card">
+            <div class="section-head-inline">
+              <h3>候选人档案概览</h3>
+              <span class="tag-chip">候选人详情</span>
+            </div>
+            <div id="applicant-portal" class="applicant-portal"></div>
+            <div class="inline-actions applicant-only applicant-action-strip">
+              <button class="btn btn--ghost" type="button" id="confirm-interview-btn">确认参加面试</button>
+              <button class="btn btn--ghost" type="button" id="refresh-profile-btn">补充最新资料</button>
+              <button class="btn btn--ghost" type="button" id="request-review-btn">请求优先查看</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside id="candidate-detail-drawer" class="detail-drawer hr-only" aria-hidden="true">
+        <div class="detail-drawer__panel">
+          <div class="section-head-inline">
+            <h3>候选人详情</h3>
+            <button class="action-btn" type="button" id="close-drawer-btn">关闭</button>
+          </div>
+          <div id="candidate-detail-content" class="detail-drawer__content"></div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <p>面向真实招聘业务流程构建，支持本地预览、演示与后续部署扩展。</p>
+    </footer>
+
+    <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
